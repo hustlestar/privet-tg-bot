@@ -1,0 +1,232 @@
+# OpenAI Prompts Configuration for Learn Words Bot
+# This file contains all prompts used by the translation service
+
+prompts:
+  language_detection:
+    system: "You are a language detection expert. Always return valid JSON only."
+    user_template: |
+      Analyze this text and determine its language, then decide the appropriate translation direction.
+
+      Text: "{text}"
+      User's native language: {user_native}
+      User's learning language: {user_learning}
+
+      Return a JSON object with this structure:
+      {{
+          "detected_language": "detected language name",
+          "confidence": "high/medium/low",
+          "translation_direction": "to_learning/to_native/ask_user",
+          "from_language": "source language for translation",
+          "to_language": "target language for translation",
+          "explanation": "brief explanation of the decision"
+      }}
+
+      Rules:
+      1. If detected language matches user's native language -> translate to learning language
+      2. If detected language matches user's learning language -> translate to native language  
+      3. If detected language is neither -> set translation_direction to "ask_user"
+      4. Be confident in language detection for common languages
+      5. Consider context and mixed-language scenarios
+
+  word_normalization:
+    system: "You are a linguistic expert. Return only valid JSON objects for word normalization."
+    user_template: |
+      Normalize the following {language} words to their base forms with special handling for certain endings.
+
+      Words: {words_list}
+
+      Return a JSON object where each key is the original word and the value is the normalized form:
+
+      Example format:
+      {{
+          "cats": "cat",
+          "beautiful": "beautiful",
+          "went": "go",
+          "running": "running",
+          "started": "started"
+      }}
+
+      Rules:
+      - Nouns: convert plurals to singular form (cats -> cat, boxes -> box)
+      - Adjectives/Adverbs: keep base form
+      - PRESERVE words ending in -ed and -ing as they often have distinct meanings
+      - Only normalize irregular verb forms (went -> go, was -> be, etc.)
+      - Remove any articles or particles
+      - Keep the same language
+      - If a word is already in base form, keep it unchanged
+      - Do NOT convert regular -ed or -ing forms (walking stays walking, started stays started)
+      - Fix any typos if present
+
+  translation:
+    system: "You are a professional translator and language expert. Always respond with valid JSON only, no additional text. Provide comprehensive linguistic information."
+    user_template: |
+      Translate the word "{normalized_word}" from {from_language} to {to_language}.
+      
+      User's native language: {user_native}
+      Native language: {native_language}
+      User's learning language: {user_learning}
+
+      Show the translation direction clearly: "{normalized_word}" ({from_language}) -> Translation ({to_language})
+      
+      Provide a JSON response with exactly this structure and following all the rules, especially that synonyms_native uses {user_native} language and synonyms_learning uses {user_learning} language
+      {{
+          "word": "{normalized_word}",
+          "from_language": "{from_language}",
+          "to_language": "{to_language}",
+          "native_language": "{native_language}",
+          "short": "single best translation",
+          "synonyms_native": ["synonym_in_{user_native}_1", "synonym_in_{user_native}_2", "synonym_in_{user_native}_3", "synonym_in_{user_native}_4", "synonym_in_{user_native}_5"],
+          "synonyms_learning": ["synonym_in_{user_learning}_1", "synonym_in_{user_learning}_2", "synonym_in_{user_learning}_3", "synonym_in_{user_learning}_4", "synonym_in_{user_learning}_5"],
+          "medium": {{
+              "word": "{normalized_word}",
+              "meaning_native": "definition/explanation in {user_native}",
+              "meaning_learning": "definition/explanation in {user_learning}",
+              "example": "example sentence using the word {normalized_word} in {from_language}",
+              "pronunciation": "in {user_learning} IPA or phonetic guide if helpful",
+              "grammar_info": "in {user_learning} verb conjugation, noun gender, etc."
+          }},
+          "long": {{
+              "translations": ["translation1", "translation2", "translation3", "translation4", "translation5"],
+              "meanings_native": ["detailed meaning 1 in {user_native}", "detailed meaning 2 in {user_native}"],
+              "meanings_learning": ["detailed meaning 1 in {user_learning}", "detailed meaning 2 in {user_learning}"],
+              "examples": ["example1 in {from_language}", "example2 in {from_language}", "example3 in {from_language}"],
+              "cultural_context": "in {user_learning} language word \"{normalized_word}\" cultural usage notes and native patterns",
+              "grammar_details": "in {user_learning} language word \"{normalized_word}\" detailed grammar information ",
+              "pronunciation_guide": "in {user_learning} language word \"{normalized_word}\" detailed pronunciation with stress patterns",
+              "usage_notes": "in {user_learning} language word \"{normalized_word}\" formal/informal, regional variations, common mistakes"
+          }}
+      }}
+
+      Rules:
+      1. For verbs, use the infinitive/base form
+      2. For nouns, use singular form
+      3. Provide up to 5 different synonyms/similar translations in the target language
+      4. Include the best translation in "short" and list 5 synonyms separately
+      5. In "long.translations", provide 5 different ways to express the word
+      6. Examples should be practical and useful
+      7. Provide explanations in BOTH native and learning languages
+      8. Include rich cultural context in {user_learning} language and native usage patterns tailored to the learning context
+      9. Add comprehensive grammar information (conjugations, genders, cases) in {user_learning} language
+      10. Include pronunciation guides (IPA notation when possible) in {user_learning} language
+      11. Note usage levels (formal/informal, regional variations) in {user_learning} language
+      12. Mention common mistakes learners make
+      13. Ensure all JSON is valid and properly escaped
+      14. Make translation direction clear in responses
+      15. Native synonyms synonyms_native must be single words or short phrases with similar meaning in {user_native} language
+      16. Learning synonyms synonyms_learning must be single words or short phrases with similar meaning in {user_learning} language
+      17. Fix typos in the word, if there is typo
+      18. Adapt explanations based on the learning context (the language the user is learning {user_learning})
+      19. Validate that synonyms_native uses {user_native} language and synonyms_learning uses {user_learning} language
+
+  translation_indirect:
+    system: "You are a professional translator and language expert. Always respond with valid JSON only, no additional text. Provide comprehensive linguistic information."
+    user_template: |
+      Translate the word "{normalized_word}" from {from_language} to {to_language}.
+      And provide additional information for the translated version of the word {normalized_word} in {to_language}.
+      
+      User's native language: {user_native}
+      Native language: {native_language}
+      User's learning language: {user_learning}
+
+      Show the translation direction clearly: "{normalized_word}" ({from_language}) -> Translation ({to_language})
+      
+      Provide a JSON response with exactly this structure and following all the rules, especially that synonyms_native uses {user_native} language and synonyms_learning uses {user_learning} language
+      {{
+          "word": "{normalized_word}",
+          "from_language": "{from_language}",
+          "to_language": "{to_language}",
+          "native_language": "{native_language}",
+          "short": "single best translation",
+          "synonyms_native": ["synonym_in_{user_native}_1", "synonym_in_{user_native}_2", "synonym_in_{user_native}_3", "synonym_in_{user_native}_4", "synonym_in_{user_native}_5"],
+          "synonyms_learning": ["synonym_in_{user_learning}_1", "synonym_in_{user_learning}_2", "synonym_in_{user_learning}_3", "synonym_in_{user_learning}_4", "synonym_in_{user_learning}_5"],
+          "medium": {{
+              "word": "{normalized_word}",
+              "meaning_native": "definition/explanation in {user_native}",
+              "meaning_learning": "definition/explanation in {user_learning}",
+              "example": "example sentence using \"the word {normalized_word} single best translation\" in {user_learning} language",
+              "pronunciation": "in {user_learning} language of \"the word {normalized_word} single best translation\" provide IPA or phonetic guide if helpful",
+              "grammar_info": "in {user_learning} language of \"the word {normalized_word} single best translation\" provide verb conjugation, noun gender, etc."
+          }},
+          "long": {{
+              "translations": ["translation1", "translation2", "translation3", "translation4", "translation5"],
+              "meanings_native": ["detailed meaning 1 in {user_native}", "detailed meaning 2 in {user_native}"],
+              "meanings_learning": ["detailed meaning 1 in {user_learning}", "detailed meaning 2 in {user_learning}"],
+              "examples": ["example1 in {user_learning}", "example2 in {user_learning}", "example3 in {user_learning}"],
+              "cultural_context": "in {user_learning} language word \"{normalized_word}\" cultural usage notes and native patterns",
+              "grammar_details": "in {user_learning} language word \"{normalized_word}\" detailed grammar information ",
+              "pronunciation_guide": "in {user_learning} language word \"{normalized_word}\" detailed pronunciation with stress patterns",
+              "usage_notes": "in {user_learning} language \"word {normalized_word} single best translation\" formal/informal, regional variations, common mistakes"
+          }}
+      }}
+
+      Rules:
+      1. For verbs, use the infinitive/base form
+      2. For nouns, use singular form
+      3. Provide up to 5 different synonyms/similar translations in the target language
+      4. Include the best translation in "short" and list 5 synonyms separately
+      5. In "long.translations", provide 5 different ways to express the \"word {normalized_word} single best translation\" 
+      6. Examples of \"the word {normalized_word} single best translation\" in {user_learning} language should be practical and useful
+      7. Provide explanations in BOTH native and learning languages
+      8. Include rich cultural context in {user_learning} language and native usage patterns tailored to the learning context
+      9. Add comprehensive grammar information (conjugations, genders, cases) of the \"word {normalized_word} single best translation\" in {user_learning} language
+      10. Include pronunciation for \"word {normalized_word} single best translation\" guides (IPA notation when possible) in {user_learning} language
+      11. Note usage levels (formal/informal, regional variations) for \"word {normalized_word} single best translation\" in {user_learning} language
+      12. Mention common mistakes learners make
+      13. Ensure all JSON is valid and properly escaped
+      14. Make translation direction clear in responses
+      15. Native synonyms synonyms_native must be single words or short phrases with similar meaning in {user_native} language
+      16. Learning synonyms synonyms_learning must be single words or short phrases with similar meaning in {user_learning} language
+      17. Fix typos in the word, if there is typo
+      18. Adapt explanations based on the learning context (the language the user is learning {user_learning})
+      19. Validate that synonyms_native uses {user_native} language and synonyms_learning uses {user_learning} language
+
+  sentence_parsing:
+    system: "You are a language processing expert. Return only valid JSON with word arrays."
+    user_template: |
+      Parse this {language} sentence into individual meaningful words that would be useful for language learning.
+
+      Sentence: "{sentence}"
+
+      Return a JSON object with an array of words:
+
+      {{
+          "words": ["word1", "word2", "word3"]
+      }}
+
+      Rules:
+      - Nouns: convert plurals to singular form
+      - PRESERVE words ending in -ed and -ing as they have distinct meanings
+      - Remove articles, prepositions, and common function words
+      - Include only content words (nouns, verbs, adjectives, adverbs)
+      - Maximum 10 words
+      - Keep -ed and -ing forms intact (walking, started, etc.)
+      - Only normalize irregular verbs and plurals
+
+# Fallback words for simple word splitting (sentence parsing fallback)
+
+# Fallback words for simple word splitting (sentence parsing fallback)
+fallback:
+  stop_words:
+    - "the"
+    - "and" 
+    - "or"
+    - "but"
+    - "in"
+    - "on"
+    - "at"
+    - "to"
+    - "for"
+    - "of"
+    - "with"
+    - "by"
+    - "a"
+    - "an"
+    - "is"
+    - "are"
+    - "was"
+    - "were"
+    - "be"
+    - "been"
+    - "have"
+    - "has"
+    - "had"

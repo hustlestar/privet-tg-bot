@@ -1,0 +1,31 @@
+[Unit]
+Description=Learn Words TG Bot Service
+After=syslog.target network.target
+
+[Service]
+User=jack
+WorkingDirectory=/home/jack/JACK/learn-words
+ExecStart=/home/jack/JACK/learn-words/.venv/bin/python /home/jack/JACK/learn-words/src/bot.py
+
+# Improved restart settings
+Restart=always
+RestartSec=10s
+StartLimitInterval=5min
+StartLimitBurst=10
+
+# Ensure clean termination
+TimeoutStopSec=30s
+KillMode=mixed
+
+# Standard output logging
+StandardOutput=journal
+StandardError=journal
+
+# Environment variables
+Environment=PYTHONUNBUFFERED=1
+Environment="PATH=/usr/bin:/home/jack/JACK/learn-words/.venv/bin:/home/jack/JACK/learn-words"
+Environment=VIRTUAL_ENV=/home/jack/JACK/learn-words/.venv
+Environment=PYTHONPATH=/usr/local/anaconda3/bin/python:/home/jack/JACK/learn-words:.
+
+[Install]
+WantedBy=multi-user.target

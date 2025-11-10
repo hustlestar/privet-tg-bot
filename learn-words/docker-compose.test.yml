@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  test-postgres:
+    image: postgres:15-alpine
+    container_name: learn-words-test-db
+    environment:
+      POSTGRES_DB: learn_words_test
+      POSTGRES_USER: test_user
+      POSTGRES_PASSWORD: test_password
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5433:5432"  # Use different port to avoid conflicts
+    volumes:
+      - test_postgres_data:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test_user -d learn_words_test"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - test-network
+
+volumes:
+  test_postgres_data:
+
+networks:
+  test-network:
+    driver: bridge

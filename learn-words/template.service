@@ -1,0 +1,31 @@
+[Unit]
+Description=${description} TG Bot Service
+After=syslog.target network.target
+
+[Service]
+User=jack
+WorkingDirectory=/home/jack/JACK/${git_repo_name}
+ExecStart=/home/jack/JACK/${git_repo_name}/.venv/bin/python /home/jack/JACK/${git_repo_name}/src/main.py
+
+# Improved restart settings
+Restart=always
+RestartSec=10s
+StartLimitInterval=5min
+StartLimitBurst=10
+
+# Ensure clean termination
+TimeoutStopSec=30s
+KillMode=mixed
+
+# Standard output logging
+StandardOutput=journal
+StandardError=journal
+
+# Environment variables
+Environment=PYTHONUNBUFFERED=1
+Environment="PATH=/usr/bin:/home/jack/JACK/${git_repo_name}/.venv/bin:/home/jack/JACK/${git_repo_name}"
+Environment=VIRTUAL_ENV=/home/jack/JACK/${git_repo_name}/.venv
+Environment=PYTHONPATH=/usr/local/anaconda3/bin/python:/home/jack/JACK/${git_repo_name}:.
+
+[Install]
+WantedBy=multi-user.target
