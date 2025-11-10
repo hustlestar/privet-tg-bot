@@ -1,0 +1,145 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Language Learning Platform Colors - Light Theme */
+    --background: 210 20% 98%; /* #FAFAFA - Off-white background */
+    --foreground: 209 34% 23%; /* #2C3E50 - Soft dark text */
+    
+    /* Card backgrounds - slightly different from main background */
+    --card: 0 0% 100%; /* Pure white for cards */
+    --card-foreground: 209 34% 23%; /* #2C3E50 */
+    
+    /* Popover elements */
+    --popover: 0 0% 100%;
+    --popover-foreground: 209 34% 23%;
+    
+    /* Primary - Soft Blue for focus and concentration */
+    --primary: 207 73% 57%; /* #4A90E2 */
+    --primary-foreground: 0 0% 100%;
+    
+    /* Secondary - Light blue backgrounds */
+    --secondary: 206 39% 95%; /* Light blue tint */
+    --secondary-foreground: 209 34% 23%;
+    
+    /* Success - Green for progress and achievements */
+    --success: 136 55% 48%; /* #52C41A */
+    --success-foreground: 0 0% 100%;
+    
+    /* Warning/CTA - Warm orange for engagement */
+    --warning: 25 95% 63%; /* #FFA940 */
+    --warning-foreground: 0 0% 100%;
+    
+    /* Muted elements */
+    --muted: 210 16% 96%; /* #F5F7FA */
+    --muted-foreground: 215 16% 59%; /* #718096 */
+    
+    /* Accent - Coral for highlights */
+    --accent: 0 72% 65%; /* #FF6B6B */
+    --accent-foreground: 0 0% 100%;
+    
+    /* Error states - Softer than pure red */
+    --destructive: 0 65% 55%;
+    --destructive-foreground: 0 0% 100%;
+    
+    /* Borders and inputs */
+    --border: 214 20% 91%;
+    --input: 214 20% 91%;
+    --ring: 207 73% 57%; /* Primary blue for focus */
+    
+    /* Border radius for friendly feel */
+    --radius: 0.75rem;
+    
+    /* Progress levels */
+    --beginner: 142 43% 89%; /* Light green */
+    --intermediate: 207 73% 87%; /* Light blue */
+    --advanced: 262 47% 87%; /* Light purple */
+    
+    /* Gamification colors */
+    --streak: 25 95% 63%; /* Orange */
+    --achievement: 45 93% 58%; /* Gold */
+  }
+
+  .dark {
+    /* Dark Mode - Deep blues and purples for evening study */
+    --background: 220 26% 11%; /* #1A202C - Deep blue background */
+    --foreground: 210 20% 98%; /* Light text */
+    
+    --card: 220 23% 15%; /* Slightly lighter than background */
+    --card-foreground: 210 20% 98%;
+    
+    --popover: 220 23% 15%;
+    --popover-foreground: 210 20% 98%;
+    
+    /* Primary - Brighter blue for dark mode */
+    --primary: 207 73% 62%; /* #5B9BD5 */
+    --primary-foreground: 220 26% 11%;
+    
+    /* Secondary - Dark blue tints */
+    --secondary: 220 20% 20%;
+    --secondary-foreground: 210 20% 98%;
+    
+    /* Success - Brighter green for dark mode */
+    --success: 136 50% 55%; /* #73D13D */
+    --success-foreground: 220 26% 11%;
+    
+    /* Warning/CTA - Warm orange */
+    --warning: 25 90% 65%;
+    --warning-foreground: 220 26% 11%;
+    
+    /* Muted elements */
+    --muted: 220 20% 25%;
+    --muted-foreground: 215 16% 65%; /* #A0AEC0 */
+    
+    /* Accent - Coral */
+    --accent: 0 70% 70%;
+    --accent-foreground: 220 26% 11%;
+    
+    /* Error states */
+    --destructive: 0 60% 60%;
+    --destructive-foreground: 220 26% 11%;
+    
+    /* Borders and inputs */
+    --border: 220 20% 25%;
+    --input: 220 20% 25%;
+    --ring: 207 73% 62%;
+    
+    /* Progress levels - darker variants */
+    --beginner: 142 43% 35%;
+    --intermediate: 207 73% 35%;
+    --advanced: 262 47% 35%;
+    
+    /* Gamification colors */
+    --streak: 25 90% 65%;
+    --achievement: 45 88% 62%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-muted-foreground/20 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-muted-foreground/30;
+}

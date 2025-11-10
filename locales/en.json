@@ -1,0 +1,19 @@
+{
+  "welcome_message": "🤖 Welcome to <b>{bot_name}</b>!\n\n{description}\n\n<i>Version:</i> {version}\n\nChoose an option below or just send me a message!",
+  "help_message": "ℹ️ <b>Help</b>\n\nAvailable commands:\n{available_commands}\n\nJust send me a message and I'll try to help you!",
+  "about_message": "ℹ️ <b>About {bot_name}</b>\n\n{description}\n\n<i>Version:</i> {version}\n\nBuilt with the Simplified Telegram Bot Template",
+  "language_changed": "✅ Language changed to English",
+  "language_selection": "🌐 Please select your language:",
+  "back_to_menu": "🔙 Back to Menu",
+  "help": "ℹ️ Help",
+  "about": "ℹ️ About",
+  "settings": "⚙️ Settings",
+  "language": "🌐 Language",
+  "processing": "⏳ Processing your message...",
+  "error_occurred": "❌ An error occurred. Please try again.",
+  "ai_not_available": "🤖 AI assistant is not available at the moment.",
+  "support_welcome": "👋 Welcome to support!\n\nSend your message and our team will help you as soon as possible.",
+  "support_reply": "💬 <b>Support Reply:</b>\n\n{answer}",
+  "support_use_reply": "ℹ️ Please reply to a user message to send a response.",
+  "unknown_command": "❓ Unknown command. Type /help for available commands."
+}

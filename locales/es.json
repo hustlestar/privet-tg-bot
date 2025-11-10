@@ -1,0 +1,19 @@
+{
+  "welcome_message": "🤖 ¡Bienvenido a <b>{bot_name}</b>!\n\n{description}\n\n<i>Versión:</i> {version}\n\n¡Elige una opción abajo o simplemente envíame un mensaje!",
+  "help_message": "ℹ️ <b>Ayuda</b>\n\nComandos disponibles:\n{available_commands}\n\n¡Solo envíame un mensaje y trataré de ayudarte!",
+  "about_message": "ℹ️ <b>Acerca de {bot_name}</b>\n\n{description}\n\n<i>Versión:</i> {version}\n\nCreado con la plantilla simplificada de Telegram Bot",
+  "language_changed": "✅ Idioma cambiado a español",
+  "language_selection": "🌐 Por favor, selecciona tu idioma:",
+  "back_to_menu": "🔙 Volver al menú",
+  "help": "ℹ️ Ayuda",
+  "about": "ℹ️ Acerca de",
+  "settings": "⚙️ Configuración",
+  "language": "🌐 Idioma",
+  "processing": "⏳ Procesando tu mensaje...",
+  "error_occurred": "❌ Ocurrió un error. Por favor, inténtalo de nuevo.",
+  "ai_not_available": "🤖 El asistente de IA no está disponible en este momento.",
+  "support_welcome": "👋 ¡Bienvenido al soporte!\n\nEnvía tu mensaje y nuestro equipo te ayudará lo antes posible.",
+  "support_reply": "💬 <b>Respuesta del soporte:</b>\n\n{answer}",
+  "support_use_reply": "ℹ️ Por favor, responde a un mensaje de usuario para enviar una respuesta.",
+  "unknown_command": "❓ Comando desconocido. Escribe /help para ver los comandos disponibles."
+}
