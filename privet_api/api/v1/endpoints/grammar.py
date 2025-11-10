@@ -4,9 +4,11 @@ from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from pydantic import BaseModel
 
-from privet_api.api.deps import get_db_pool
+from privet_api.api.deps import get_db_pool, get_ai_provider
 from asyncpg import Pool
 from privet_api.repositories.grammar_repository import GrammarRepository
+from privet_api.services.grammar import GrammarRuleGenerator
+from privet_api.services.ai import BaseAIProvider
 from privet_api.models.schemas.base import ResponseSchema
 
 router = APIRouter()
@@ -221,3 +223,245 @@ async def get_grammar_categories(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error fetching categories: {str(e)}"
         )
+
+
+# AI-Powered Grammar Generation Endpoints
+
+class GenerateRuleRequest(BaseModel):
+    """Request to generate a single grammar rule."""
+    language: str
+    category: str
+    subcategory: str
+    difficulty_level: str
+    native_language: str = "en"
+
+
+class GenerateCategoryRequest(BaseModel):
+    """Request to generate rules for an entire category."""
+    language: str
+    category: str
+    difficulty_levels: Optional[List[str]] = None
+    native_language: str = "en"
+
+
+class GenerateLibraryRequest(BaseModel):
+    """Request to generate a complete grammar library."""
+    language: str
+    native_language: str = "en"
+    categories: Optional[List[str]] = None
+    difficulty_levels: Optional[List[str]] = None
+
+
+@router.post("/generate/rule", response_model=ResponseSchema)
+async def generate_grammar_rule(
+    request: GenerateRuleRequest,
+    db_pool: Pool = Depends(get_db_pool),
+    ai_provider: BaseAIProvider = Depends(get_ai_provider),
+):
+    """Generate a single grammar rule using AI.
+
+    This endpoint uses AI to create a comprehensive grammar rule with:
+    - Multi-language titles and descriptions
+    - 5-8 practical examples with translations
+    - Tags for searchability
+    - Related rule suggestions
+    - Appropriate for specified CEFR level
+
+    Example categories and subcategories:
+    - verbs: present_tense, past_tense, future_tense, conditional, subjunctive
+    - nouns: gender, number, articles, diminutives
+    - pronouns: personal, possessive, demonstrative, relative
+    - adjectives: agreement, position, comparatives, superlatives
+    """
+    grammar_repo = GrammarRepository(db_pool)
+    generator = GrammarRuleGenerator(ai_provider, grammar_repo)
+
+    try:
+        rule = await generator.generate_grammar_rule(
+            language=request.language,
+            category=request.category,
+            subcategory=request.subcategory,
+            difficulty_level=request.difficulty_level,
+            native_language=request.native_language
+        )
+
+        if not rule:
+            return ResponseSchema(
+                success=False,
+                data=None,
+                message="Failed to generate grammar rule or rule already exists"
+            )
+
+        return ResponseSchema(
+            success=True,
+            data=rule,
+            message=f"Grammar rule '{rule['rule_code']}' generated successfully"
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error generating grammar rule: {str(e)}"
+        )
+
+
+@router.post("/generate/category", response_model=ResponseSchema)
+async def generate_category_rules(
+    request: GenerateCategoryRequest,
+    db_pool: Pool = Depends(get_db_pool),
+    ai_provider: BaseAIProvider = Depends(get_ai_provider),
+):
+    """Generate all grammar rules for a specific category.
+
+    This will create rules for all subcategories within the specified category,
+    across the specified difficulty levels.
+
+    Available categories:
+    - verbs (8 subcategories)
+    - nouns (5 subcategories)
+    - pronouns (6 subcategories)
+    - adjectives (4 subcategories)
+    - prepositions (4 subcategories)
+    - adverbs (4 subcategories)
+    - sentence_structure (5 subcategories)
+
+    This can take several minutes to complete depending on the number of rules.
+    """
+    grammar_repo = GrammarRepository(db_pool)
+    generator = GrammarRuleGenerator(ai_provider, grammar_repo)
+
+    try:
+        stats = await generator.generate_category_rules(
+            language=request.language,
+            category=request.category,
+            difficulty_levels=request.difficulty_levels,
+            native_language=request.native_language
+        )
+
+        return ResponseSchema(
+            success=True,
+            data=stats,
+            message=f"Generated {stats['total_created']} rules for category '{request.category}'"
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error generating category rules: {str(e)}"
+        )
+
+
+@router.post("/generate/library", response_model=ResponseSchema)
+async def generate_grammar_library(
+    request: GenerateLibraryRequest,
+    db_pool: Pool = Depends(get_db_pool),
+    ai_provider: BaseAIProvider = Depends(get_ai_provider),
+):
+    """Generate a complete grammar library for a language.
+
+    ⚠️ WARNING: This is a long-running operation that may take 30+ minutes
+    and consume significant AI API credits.
+
+    This will generate hundreds of grammar rules covering:
+    - All 7 categories
+    - All subcategories within each
+    - All 6 CEFR levels (A1, A2, B1, B2, C1, C2)
+
+    Total rules generated: ~200+ rules per language
+
+    Use `/generate/category` for more targeted generation.
+
+    Recommended approach:
+    1. Start with A1-A2 levels only
+    2. Focus on high-priority categories (verbs, nouns)
+    3. Generate gradually as needed
+    """
+    grammar_repo = GrammarRepository(db_pool)
+    generator = GrammarRuleGenerator(ai_provider, grammar_repo)
+
+    try:
+        stats = await generator.generate_complete_grammar_library(
+            language=request.language,
+            native_language=request.native_language,
+            categories=request.categories,
+            difficulty_levels=request.difficulty_levels
+        )
+
+        return ResponseSchema(
+            success=True,
+            data=stats,
+            message=f"Grammar library generated: {stats['total_created']} rules created"
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error generating grammar library: {str(e)}"
+        )
+
+
+@router.get("/recommend/{user_id}", response_model=ResponseSchema)
+async def get_recommended_rules(
+    user_id: int,
+    language: str = Query(..., description="Target language"),
+    limit: int = Query(10, ge=1, le=50, description="Number of recommendations"),
+    db_pool: Pool = Depends(get_db_pool),
+    ai_provider: BaseAIProvider = Depends(get_ai_provider),
+):
+    """Get personalized grammar rule recommendations for a user.
+
+    Returns grammar rules appropriate for the user's current level,
+    prioritized by:
+    1. User's current CEFR level
+    2. Category importance (verbs > nouns > pronouns > etc.)
+    3. Learning progress
+
+    The system analyzes user progress to determine their level and
+    suggests rules that are:
+    - Appropriate for their current level
+    - Slightly challenging (includes some next-level rules)
+    - Prioritized by practical importance
+    """
+    grammar_repo = GrammarRepository(db_pool)
+    generator = GrammarRuleGenerator(ai_provider, grammar_repo)
+
+    try:
+        recommended_rules = await generator.get_recommended_rules(
+            user_id=user_id,
+            language=language,
+            limit=limit
+        )
+
+        return ResponseSchema(
+            success=True,
+            data={"recommendations": recommended_rules},
+            message=f"Retrieved {len(recommended_rules)} recommended grammar rules"
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error getting recommendations: {str(e)}"
+        )
+
+
+@router.get("/metadata", response_model=ResponseSchema)
+async def get_grammar_metadata():
+    """Get grammar generation metadata.
+
+    Returns information about:
+    - CEFR levels and their characteristics
+    - Available categories and subcategories
+    - Category priorities for learning
+    - Estimated rule counts
+    """
+    from privet_api.services.grammar import GrammarRuleGenerator
+
+    return ResponseSchema(
+        success=True,
+        data={
+            "cefr_levels": GrammarRuleGenerator.CEFR_LEVELS,
+            "categories": GrammarRuleGenerator.GRAMMAR_CATEGORIES,
+            "total_possible_rules": sum(
+                len(cat["subcategories"]) * 6  # 6 CEFR levels
+                for cat in GrammarRuleGenerator.GRAMMAR_CATEGORIES.values()
+            )
+        },
+        message="Grammar generation metadata retrieved successfully"
+    )
