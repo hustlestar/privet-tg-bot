@@ -1,0 +1,19 @@
+#!/usr/bin/env python3
+"""Run the Learn Words Vocabulary API server."""
+
+import sys
+import os
+
+# Add src to path for imports
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run(
+        "src.api.main:app",
+        host="0.0.0.0",
+        port=8001,
+        reload=True,
+        log_level="info",
+    )
