@@ -10,10 +10,12 @@ from .users import users_table
 from .conversation_messages import conversation_messages_table
 from .user_facts import user_facts_table
 from .user_profile_summaries import user_profile_summaries_table
-from .vocabulary_words import vocabulary_words_table
 from .pronunciation_cache import pronunciation_cache_table
 from .learning_sessions import learning_sessions_table
 from .user_language_settings import user_language_settings_table
+from .grammar_rules import grammar_rules_table
+from .user_progress import user_progress_table
+from .achievements import achievements_table, user_achievements_table
 
 __all__ = [
     "metadata",
@@ -21,8 +23,11 @@ __all__ = [
     "conversation_messages_table",
     "user_facts_table",
     "user_profile_summaries_table",
-    "vocabulary_words_table",
     "pronunciation_cache_table",
     "learning_sessions_table",
     "user_language_settings_table",
+    "grammar_rules_table",
+    "user_progress_table",
+    "achievements_table",
+    "user_achievements_table",
 ]

@@ -16,7 +16,6 @@ from privet_api.repositories.fact_repository import FactRepository
 from privet_api.repositories.profile_repository import ProfileRepository
 from privet_api.repositories.api_usage_repository import APIUsageRepository
 from privet_api.repositories.pronunciation_repository import PronunciationRepository
-from privet_api.repositories.vocabulary_repository import VocabularyRepository
 from privet_api.services.rag.rag_service import RAGService
 from privet_api.services.audio.audio_service import AudioService
 from privet_api.services.conversation.conversation_manager import ConversationManager
@@ -24,7 +23,6 @@ from privet_api.services.nlp.nlp_service import NLPService
 from privet_api.services.ai.ai_provider import OpenRouterProvider, MockAIProvider
 from privet_api.services.expense_tracker import ExpenseTracker
 from privet_api.services.pronunciation.pronunciation_service import PronunciationService
-from privet_api.services.vocabulary.vocabulary_service import VocabularyService
 
 # Configure logging
 logging.basicConfig(
@@ -62,7 +60,6 @@ async def lifespan(app: FastAPI):
     profile_repo = ProfileRepository(db_manager.pool)
     api_usage_repo = APIUsageRepository(db_manager.pool)
     pronunciation_repo = PronunciationRepository(db_manager.pool)
-    vocabulary_repo = VocabularyRepository(db_manager.pool)
     
     # Initialize expense tracker
     expense_tracker = ExpenseTracker(api_usage_repo)
@@ -120,12 +117,6 @@ async def lifespan(app: FastAPI):
         pronunciation_repo=pronunciation_repo,
     )
     logger.info("Pronunciation service initialized")
-
-    vocabulary_service = VocabularyService(
-        vocabulary_repo=vocabulary_repo,
-        pronunciation_service=pronunciation_service,
-    )
-    logger.info("Vocabulary service initialized")
     
     # Register services for dependency injection
     set_service("user_repository", user_repo)
@@ -134,7 +125,6 @@ async def lifespan(app: FastAPI):
     set_service("profile_repository", profile_repo)
     set_service("api_usage_repository", api_usage_repo)
     set_service("pronunciation_repository", pronunciation_repo)
-    set_service("vocabulary_repository", vocabulary_repo)
     set_service("expense_tracker", expense_tracker)
     set_service("rag_service", rag_service)
     set_service("audio_service", audio_service)
@@ -142,7 +132,6 @@ async def lifespan(app: FastAPI):
     set_service("ai_provider", ai_provider)
     set_service("conversation_manager", conversation_manager)
     set_service("pronunciation_service", pronunciation_service)
-    set_service("vocabulary_service", vocabulary_service)
 
     logger.info("All services initialized and registered")
     

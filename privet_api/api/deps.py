@@ -204,17 +204,6 @@ async def get_pronunciation_repository():
     return repo
 
 
-async def get_vocabulary_repository():
-    """Get vocabulary repository instance."""
-    repo = get_service("vocabulary_repository")
-    if not repo:
-        from privet_api.repositories.vocabulary_repository import VocabularyRepository
-        pool = await get_db_pool()
-        repo = VocabularyRepository(pool)
-        set_service("vocabulary_repository", repo)
-    return repo
-
-
 async def get_pronunciation_service():
     """Get pronunciation service instance."""
     service = get_service("pronunciation_service")
@@ -222,16 +211,5 @@ async def get_pronunciation_service():
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Pronunciation service not available"
-        )
-    return service
-
-
-async def get_vocabulary_service():
-    """Get vocabulary service instance."""
-    service = get_service("vocabulary_service")
-    if not service:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Vocabulary service not available"
         )
     return service

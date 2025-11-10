@@ -1,15 +1,21 @@
 """Pronunciation and TTS endpoints with caching."""
 
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, UploadFile, File, Form
 from fastapi.responses import Response
 import base64
 
-from privet_api.api.deps import get_pronunciation_service
+from privet_api.api.deps import get_pronunciation_service, get_audio_service
 from privet_api.services.pronunciation import PronunciationService
+from privet_api.services.audio import AudioService
+from privet_api.services.pronunciation.pronunciation_assessment import PronunciationAssessmentService
 from privet_api.models.schemas.vocabulary import (
     PronunciationRequest,
     PronunciationResponse,
+)
+from privet_api.models.schemas.pronunciation_assessment import (
+    PronunciationAssessmentResponse,
+    WordPronunciationAssessmentResponse,
 )
 from privet_api.models.schemas.base import ResponseSchema
 
@@ -219,4 +225,129 @@ async def cleanup_old_cache(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error cleaning up cache: {str(e)}"
+        )
+
+
+# Pronunciation Assessment Endpoints
+
+@router.post("/assess", response_model=PronunciationAssessmentResponse)
+async def assess_pronunciation(
+    audio_file: UploadFile = File(..., description="Audio file of user's pronunciation"),
+    expected_text: str = Form(..., description="The text the user should pronounce"),
+    language: str = Form("en", description="Language code (en, es, ru)"),
+    audio_service: AudioService = Depends(get_audio_service),
+) -> PronunciationAssessmentResponse:
+    """Assess pronunciation quality by comparing user's audio to expected text.
+
+    This endpoint:
+    1. Transcribes the user's audio using Whisper STT
+    2. Compares it to the expected text
+    3. Calculates an accuracy score (0-100)
+    4. Provides specific feedback and identifies issues
+
+    Accuracy thresholds:
+    - 90-100: Excellent
+    - 80-89: Good (acceptable)
+    - 60-79: Fair (needs practice)
+    - 0-59: Poor (needs significant practice)
+
+    Returns:
+        - accuracy_score: 0-100 pronunciation accuracy
+        - transcribed_text: What was actually said
+        - is_correct: Boolean if score >= 80%
+        - feedback: Human-readable feedback
+        - issues: List of specific pronunciation problems
+    """
+    try:
+        # Validate file size (max 10MB)
+        max_size = 10 * 1024 * 1024  # 10MB
+        audio_bytes = await audio_file.read()
+        if len(audio_bytes) > max_size:
+            raise HTTPException(
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                detail="Audio file too large. Maximum size is 10MB"
+            )
+
+        # Validate file type
+        allowed_types = ["audio/ogg", "audio/mpeg", "audio/wav", "audio/webm", "audio/mp4", "audio/x-m4a"]
+        if audio_file.content_type and audio_file.content_type not in allowed_types:
+            raise HTTPException(
+                status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+                detail=f"Unsupported audio format. Allowed: {', '.join(allowed_types)}"
+            )
+
+        # Create assessment service
+        assessment_service = PronunciationAssessmentService(audio_service)
+
+        # Assess pronunciation
+        result = await assessment_service.assess_pronunciation(
+            audio_data=audio_bytes,
+            expected_text=expected_text,
+            language=language,
+            filename=audio_file.filename or "pronunciation.ogg"
+        )
+
+        return PronunciationAssessmentResponse(**result)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error assessing pronunciation: {str(e)}"
+        )
+
+
+@router.post("/assess/word", response_model=WordPronunciationAssessmentResponse)
+async def assess_word_pronunciation(
+    audio_file: UploadFile = File(..., description="Audio file of user pronouncing a single word"),
+    word: str = Form(..., description="The word the user should pronounce"),
+    language: str = Form("en", description="Language code (en, es, ru)"),
+    audio_service: AudioService = Depends(get_audio_service),
+) -> WordPronunciationAssessmentResponse:
+    """Simplified pronunciation assessment for a single word.
+
+    This is optimized for single-word pronunciation practice, providing:
+    - Word-specific feedback
+    - Recommended number of retry attempts
+    - Simpler assessment logic
+
+    Use this for:
+    - Vocabulary word practice
+    - Pronunciation drills
+    - Quick pronunciation checks
+
+    Returns same fields as /assess plus:
+        - word: The word being assessed
+        - attempts_recommended: How many more times to practice (0 if good)
+    """
+    try:
+        # Validate file size
+        max_size = 5 * 1024 * 1024  # 5MB for single words
+        audio_bytes = await audio_file.read()
+        if len(audio_bytes) > max_size:
+            raise HTTPException(
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                detail="Audio file too large. Maximum size is 5MB for word assessment"
+            )
+
+        # Create assessment service
+        assessment_service = PronunciationAssessmentService(audio_service)
+
+        # Assess word pronunciation
+        result = await assessment_service.assess_word_pronunciation(
+            audio_data=audio_bytes,
+            word=word,
+            language=language,
+            filename=audio_file.filename or "word.ogg"
+        )
+
+        return WordPronunciationAssessmentResponse(**result)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error assessing word pronunciation: {str(e)}"
         )
