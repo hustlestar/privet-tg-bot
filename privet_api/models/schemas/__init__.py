@@ -12,7 +12,6 @@ from .user import *
 from .conversation import *
 from .memory import *
 from .voice import *
-from .vocabulary import *
 from .streaming import *
 
 __all__ = [
