@@ -7,7 +7,9 @@ from privet_api.api.v1.endpoints import (
     voice,
     memory,
     health,
-    expenses
+    expenses,
+    vocabulary,
+    pronunciation,
 )
 
 api_router = APIRouter()
@@ -19,3 +21,5 @@ api_router.include_router(conversations.router, prefix="/conversations", tags=["
 api_router.include_router(voice.router, prefix="/voice", tags=["voice"])
 api_router.include_router(memory.router, prefix="/memory", tags=["memory"])
 api_router.include_router(expenses.router, prefix="/expenses", tags=["expenses"])
+api_router.include_router(vocabulary.router, prefix="/vocabulary", tags=["vocabulary"])
+api_router.include_router(pronunciation.router, prefix="/pronunciation", tags=["pronunciation"])
